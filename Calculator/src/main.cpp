@@ -14,13 +14,44 @@ class Token
             :kind(ch), value(vl) {}
 };
 
-Token get_Token()               // read a Token from cin
+class Token_Stream
 {
-    char ch;
-    cin >> ch;                  // Note: cin skips whitespaces, /n, spaces and \t etc
+    public:
+        Token_Stream();
+        Token get();
+        void putback(Token T);
+    private:
+        bool full;              // is there a token in the buffer?
+        Token buffer;           // when putback .. is called, here is where we store it
+};
 
-    switch (ch)
+// the class constructor
+Token_Stream::Token_Stream(): full(false), buffer(0)
+{}
+
+void Token_Stream::putback(Token T)
+{
+    if(full)
+        error("the buffer is already full");
+    buffer = T;
+    full = true;
+}
+
+Token Token_Stream::get()
+{
+    if(full)
     {
+        full = false;
+        return buffer;
+    }
+
+    char ch;
+    cin >> ch;
+
+    switch(ch)
+    {
+        case ';': 
+        case 'q':
         case '(':
         case ')':
         case '+':
@@ -28,7 +59,6 @@ Token get_Token()               // read a Token from cin
         case '*':
         case '/':
             return Token(ch);
-        
         case '.':
         case '0':
         case '1':
@@ -41,16 +71,18 @@ Token get_Token()               // read a Token from cin
         case '8':
         case '9':
         {
-            cin.putback(ch);        // put the char, back into the stream
+            cin.putback(ch);
             double val;
             cin >> val;
             return Token('8', val);
         }
 
         default:
-            error("Bad Token");
+            error("bad token");
     }
 }
+
+Token_Stream TS;
 
 double expression();
 
@@ -58,14 +90,14 @@ double term();
 
 double primary()
 {
-    Token T = get_Token();
+    Token T = TS.get();
 
     switch(T.kind)
     {
         case '(':
         {
             double d = expression();
-            T = get_Token();
+            T = TS.get();
             if(T.kind != ')')
                 error("')' expected");
             return d;
@@ -85,7 +117,7 @@ double primary()
 double expression()
 {
     double left = term();           //read and evaluate a term
-    Token T = get_Token();          //get the next token
+    Token T = TS.get();         //get the next token
 
     while(true)
     {
@@ -93,15 +125,16 @@ double expression()
         {
             case '+':
                 left += term();     // evaluate term and add
-                T = get_Token();
+                T = TS.get();
                 break;
 
             case '-':
                 left -= term();     // evaluate term and subtract
-                T = get_Token();
+                T = TS.get();
                 break;
 
             default:
+            TS.putback(T);
             return left;            // return the answer, if no more + or -
         }
     }
@@ -110,7 +143,7 @@ double expression()
 double term()
 {
     double left = primary();
-    Token T = get_Token();
+    Token T = TS.get();
 
     while(true)
     {
@@ -119,7 +152,7 @@ double term()
             case '*':
             {
                 left *= primary();
-                T = get_Token();
+                T = TS.get();
                 break;
             }
 
@@ -129,31 +162,62 @@ double term()
                 if(d == 0)
                     error("dividing by zero");
                 left /= d;
-                T = get_Token();
+                T = TS.get();
                 break;
             }
 
             default:
+                TS.putback(T);
                 return left;
         }
     }
+}
+
+void exit_program()
+{
+    cout<<"Please enter the charachter ~ to close the windows\n";
+    for (char ch; cin >> ch;)
+        if(ch=='~')
+            return;
+    return;
 }
 
 int main()
 {
     try
     {
+        double val = 0;
         while (cin)
-            cout << "=" << expression() << endl;
+        {   
+            cout << '>';
+            
+            Token T = TS.get();
+
+            while(T.kind == ';')
+                T = TS.get();
+            if(T.kind == 'q')
+            {
+                exit_program();
+                return 0;
+            }
+
+            TS.putback(T);
+            cout<<"="<<expression()<<"\n";
+        }
+
+        exit_program();
+        return 0;
     }
     catch (exception& e)
     {
         cerr << e.what() << endl;
+        exit_program();
         return 1;
     }
     catch (...)
     {
         cerr << "exception \n";
+        exit_program();
         return 2;
     }
 
