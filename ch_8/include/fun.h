@@ -1,0 +1,1 @@
+void print_input(const int a);

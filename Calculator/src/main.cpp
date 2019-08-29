@@ -1,5 +1,6 @@
 # include <iostream>
 #include "std_lib_facilities.h"
+#include <cmath>
 
 using namespace std;
 
@@ -36,6 +37,12 @@ void Token_Stream::putback(Token T)
     buffer = T;
     full = true;
 }
+
+const char number = '8';
+const char quit = 'q';
+const char print = ';';
+const char prompt = '>>';
+const string result = "=";
 
 Token Token_Stream::get()
 {
@@ -74,7 +81,7 @@ Token Token_Stream::get()
             cin.putback(ch);
             double val;
             cin >> val;
-            return Token('8', val);
+            return Token(number, val);
         }
 
         default:
@@ -104,9 +111,19 @@ double primary()
         }
         break;
 
-        case '8':
+        case number:
         {
             return T.value;
+        }
+
+        case '-':
+        {
+            return -primary();
+        }
+
+        case '+':
+        {
+            return +primary();
         }
 
         default:
@@ -166,6 +183,16 @@ double term()
                 break;
             }
 
+            case '%':
+            {
+                double d = primary();
+                if(d == 0)
+                    error("dividing by zero");
+                left = fmod(left,d);
+                T = TS.get();
+                break;
+            }
+
             default:
                 TS.putback(T);
                 return left;
@@ -182,29 +209,29 @@ void exit_program()
     return;
 }
 
+void calculate()
+{
+        while (cin)
+        {   
+            cout << prompt;
+            
+            Token T = TS.get();
+
+            while(T.kind == print)
+                T = TS.get();
+            if(T.kind == quit)
+                return;
+
+            TS.putback(T);
+            cout<<result<<expression()<<"\n";
+        }
+}
+
 int main()
 {
     try
     {
-        double val = 0;
-        while (cin)
-        {   
-            cout << '>';
-            
-            Token T = TS.get();
-
-            while(T.kind == ';')
-                T = TS.get();
-            if(T.kind == 'q')
-            {
-                exit_program();
-                return 0;
-            }
-
-            TS.putback(T);
-            cout<<"="<<expression()<<"\n";
-        }
-
+        calculate();
         exit_program();
         return 0;
     }

@@ -1,0 +1,37 @@
+1) ctrl + shift + p -> launch command pallet
+2) select "Create c++ project"
+3) replace launch.json with this ... this is found under the .vscode folder on the tree structure on the left
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/main",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}
+
+4) in the Makefile ... at the very last line, before "-o" add "-g" -> this adds the debug info
+
+5) add any header files under the "include" folder
+
+6) add any source files under the "src" folder, when including a header file in a source, just call out the header file name, don't have to account for the folder structure, the make file is smart enough to account for it ... 
+
+7) if you have a custom "file_name.h" file with custom definition, you can drop the file in the include folder, and add "#include file_name.h" in main.cpp or where ever it needs used
+
+
